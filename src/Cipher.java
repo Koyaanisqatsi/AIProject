@@ -15,22 +15,47 @@ public class Cipher implements Serializable{
     *
     * */
 
-    private String cipherText;
-    private int key;
+    private String plainText;
+    private long key;
+    public String cipherText;
 
-    public Cipher(String cipherText, int keyLength, boolean isKey){
+    public Cipher(String plainText, int keyLength, boolean isKey){
 
-        this.cipherText = cipherText.toUpperCase();
+        this.plainText = plainText.toUpperCase();
         if(isKey){
             this.key = keyLength;
         }else{
-            this.key = Cryptek.generateKey(keyLength);
+            this.key = Cryptek.generateLongKey(keyLength);
         }
-
+        this.cipherText = "";
     }
 
     public int keyLength(){
-        return Tools.len(this.key);
+        return (int)Tools.longLen(this.key);
+    }
+
+    // For test purposes only
+
+    public String getPlainText(){
+        return this.plainText;
+    }
+
+    public double fitness(ArrayList<NGram> ngram, String cipherText){
+
+        double fitness = 0;
+        int order = ngram.get(0).order;
+        String substr = "";
+
+        for(int i = 0; i < cipherText.length()-order; ++i){
+            substr = cipherText.substring(i,i+order);
+            if(Decrypter.containsNGram(substr, ngram)){
+                fitness+= (order-1)*(order-1)*ngram.get(Decrypter.findIndex(substr, ngram)).freq;
+            }
+            if(!Decrypter.containsNGram(substr, ngram) && order > 2){
+                fitness-=order;
+            }
+        }
+        return fitness;
     }
 
 
@@ -41,7 +66,7 @@ public class Cipher implements Serializable{
 
     public void encrypt(){
         ArrayList<String> plaintext = this.encryptionSetup(this.keyLength());
-        //System.out.println(plaintext.toString());
+        //System.out.println("Cipher in encrypt: " + plaintext.toString());
         String ciphertext = transposition(plaintext);
         this.setCipherText(ciphertext);
     }
@@ -52,7 +77,7 @@ public class Cipher implements Serializable{
 
         ArrayList<Integer> indices = transpositionIndices();
 
-        System.out.println("Indices: " + indices.toString());
+      //  System.out.println("Indices: " + indices.toString());
 
         StringBuilder sb = new StringBuilder(ciphertext);
 
@@ -71,7 +96,7 @@ public class Cipher implements Serializable{
         return accessOrder(indices);
     }
 
-    private ArrayList<Integer> accessOrder(ArrayList<Integer> indices){
+    public ArrayList<Integer> accessOrder(ArrayList<Integer> indices){
 
         try{
         ArrayList<ArrayIndex> sorted = accessIndex(indices);
@@ -121,16 +146,18 @@ public class Cipher implements Serializable{
         return cipher;
     }
 
-    private ArrayList<String> encryptionSetup(int keyLength){
-        int cipherLength = this.cipherText.length();
+    public ArrayList<String> encryptionSetup(int keyLength){
+        int cipherLength = this.plainText.length();
 
         ArrayList<String> cipher = initCipher(keyLength);
+
+       //System.out.println("cipher in setup: " + cipher.toString());
 
         StringBuilder sb = new StringBuilder();
 
         for(int i = 0; i < cipherLength; ++i){
             sb.append(cipher.get(i%keyLength).toString());
-            sb.append(this.cipherText.charAt(i));
+            sb.append(this.plainText.charAt(i));
             cipher.set(i%keyLength, sb.toString());
             sb.setLength(0);
         }
@@ -138,11 +165,11 @@ public class Cipher implements Serializable{
     }
 
     public void print(){
-        System.out.println("Ciphertext: " + this.toString());
+        System.out.println(this.toString());
     }
 
     public String toString(){
-        return this.cipherText;
+        return "PlainText: " + this.plainText + " \nCipherText: " + this.cipherText;
     }
 
 

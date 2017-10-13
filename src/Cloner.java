@@ -53,4 +53,16 @@ public class Cloner {
         }
         return copy;
     }
+    public static ArrayList<SurvivalDistribution> deepCopySurvivalDistribution(ArrayList<SurvivalDistribution> survivalDistributionArrayList){
+	    try{
+	        ArrayList<SurvivalDistribution> copy = new ArrayList<>();
+	        for(int i = 0; i < survivalDistributionArrayList.size(); ++i){
+	            copy.add(survivalDistributionArrayList.get(i));
+            }
+            return copy;
+        }catch (Exception e){
+	        System.out.println("Was not able to copy ArrayList<SurvivalDistribution>");
+        }
+        return null;
+    }
 }
