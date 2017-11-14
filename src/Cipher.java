@@ -22,6 +22,8 @@ public class Cipher implements Serializable{
     public Cipher(String plainText, int keyLength, boolean isKey){
 
         this.plainText = plainText.toUpperCase();
+        this.plainText = this.plainText.replaceAll(" ", "");
+
         if(isKey){
             this.key = keyLength;
         }else{

@@ -1,9 +1,7 @@
-import javax.print.attribute.SupportedValuesAttribute;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -11,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static java.lang.Math.abs;
 
-public class Cryptek {
+public class Cryptek{
 
     ArrayList<ArrayList<NGram>> NGrams;
 
@@ -22,35 +20,17 @@ public class Cryptek {
 
     public static void main(String args[]){
 
-        // key: 41369
-        Cipher c = new Cipher("the test text to decrypt", 39713,true);
-       // System.out.println("Ciphertext before encryption: ");
-       // c.print();
+        // key: 39713
+        Cipher c = new Cipher("the test text to decrypt is now longer to see if the program works well with longer messages and seems to be working rather well even when using blank spaces which is very exciting to see happen", 39713,true);
         c.encrypt();
-        //System.out.println("Ciphertext after encryption: " );
         c.print();
 
         Cryptek cryptek = new Cryptek();
+
         ArrayList<Decrypter> population = populate(20);
-        cryptek.runDecryption(population, 0, 2, c, 3);
+        cryptek.runDecryption(population, 0, 5, c, 4);
 
-        //Decrypter d = new Decrypter();
-        //d.hack(cryptek.NGrams, c.cipherText, 3);
-        //System.out.println("cheat decipher: " + d.cheatDecrypt(c, 39713));
-
-        /*
-        Decrypter d = new Decrypter();
-        d.print();
-
-        ArrayList<ArrayList<NGram>> ngrams = loadNGrams();
-
-        d.hack(ngrams, c.cipherText);
-
-        System.out.println("Decryption attempt of decrypter " + d.toString() + ": fitness =  " + d.fitness);
-
-        */
     }
-
 
     public static ArrayList<ArrayList<NGram>> loadNGrams(){
 
@@ -81,25 +61,9 @@ public class Cryptek {
         return null;
     }
 
-    public static int generateKey(int keyLength){
-
-        System.out.println("Generating key of length: " + keyLength);
-        Random rnd = new Random();
-        if(keyLength < 2){
-            keyLength = 2;
-        }
-        int key = (int)(Math.pow(10, keyLength-1) + rnd.nextInt((int)Math.pow(10, keyLength-1)*9));
-        System.out.println("Generated key: " + key);
-
-        return (key > 0 ? key : generateKey(keyLength));
-    }
-
     public static long generateLongKey(int keyLength){
         keyLength = (keyLength > 3 ? keyLength : 3);
-
-        //System.out.println("keyLength in generation: " + keyLength);
         long key = (long)Math.pow(10, keyLength-1) + ThreadLocalRandom.current().nextLong((long)Math.pow(10, keyLength-1)*9);
-        //long key = ThreadLocalRandom.current().nextLong((long)Math.pow(10, keyLength-1)*9);
         System.out.println("Generated long key: " + key);
         return key ;
     }
@@ -110,28 +74,14 @@ public class Cryptek {
 
         int perKeyType = populationSize/10; // population of 100 means 10 keys of length 2..12
 
-        //System.out.println("perKeyType: " + perKeyType);
-        //System.out.println("populationSize: " + populationSize);
-
-
-
         ArrayList<Decrypter> population = new ArrayList<>();
         for(int i = 0; i < populationSize/perKeyType; ++i){
             for(int j = 0; j < perKeyType; ++j){
                 population.add(new Decrypter( ((i%10)+3)));
             }
-
-           // population.add(new Decrypter());
         }
         return population;
     }
-
-    // TODO: run hack to get cipher attempts, fitness
-    // TODO: normalize fitness to prepare for crossing
-    // TODO: breed according to fitness distrubution, more fit are more likely to breed
-    // TODO: setup new generation
-    // TODO: run for X generations
-
 
     public void runDecryption(ArrayList<Decrypter> population, int generation, int totalGenerations, Cipher cipher, int orderOfNGrams){
 
@@ -161,28 +111,32 @@ public class Cryptek {
         System.out.println("The program has run for its allotted generations.");
         System.out.println("The result is as follows: ");// + population.toString());
 
+        Collections.sort(population);
+
         for(int i = 0; i < population.size(); ++i){
             population.get(i).print();
         }
+
+        System.out.print("\nBest attempt: ");
+        population.get(population.size()-1).print();
+        System.out.println("Most probable key length: " + population.get(population.size()-1).chromosome.size());
+
         }
     }
 
 
     private ArrayList<Decrypter> survivalOfTheFittest(ArrayList<Decrypter> population, int generation, Cipher cipher){
 
-        //System.out.println("Preparing for the survival of the fittest. Normalizing fitness");
-        //population = normalizeFitness(population, cipher, this.NGrams); //
-        //System.out.println("Fitness normalized. Computing survival rate.");
         ArrayList<SurvivalDistribution> survival = survivalRate(population); // Calculates rate of survival depending on fitness
 
         // The longer this goes on, i.e the larger generation, the less breeding occurs. Generation 0 (init) starts with 100. When these breed, breed 50 times creating 100 children. Generation 2 creates ,
 
         ArrayList<Decrypter> theNextGeneration = new ArrayList<>();
 
-        System.out.println("Preparations complete, finding candidates for breeding");
+        //System.out.println("Preparations complete, finding candidates for breeding");
+        //System.out.println("Current generation has " + population.size() + " members");
+        //System.out.println("Elitist jerks always survive!");
 
-        System.out.println("Current generation has " + population.size() + " members");
-        System.out.println("Elitist jerks always survive!");
         ArrayList<Decrypter> eliteChildren = elitistJerks(population);
 
         theNextGeneration.add(eliteChildren.get(0));
@@ -191,19 +145,16 @@ public class Cryptek {
         for(int i = 0; i < population.size()/(1+generation); ++i){
             ArrayList<Decrypter> parents = pickBreeders(survival);
 
-            System.out.println("Parents found: " + parents.get(0).chromosome.toString() + " and " + parents.get(1).chromosome.toString() + " were found to be a match.");
+            //System.out.println("Parents found: " + parents.get(0).chromosome.toString() + " and " + parents.get(1).chromosome.toString() + " were found to be a match.");
 
             // TODO: breedSmaller, breedBigger. breed is for spouses of the same chromosome size
 
             ArrayList<Decrypter> children = breed(parents);
             theNextGeneration.add(children.get(0).mutate(generation));
             theNextGeneration.add(children.get(1).mutate(generation));
-            System.out.println("The two resulting children are: " + theNextGeneration.get(0).chromosome.toString() + " and " + theNextGeneration.get(1).chromosome.toString());
+            //System.out.println("The two resulting children are: " + theNextGeneration.get(0).chromosome.toString() + " and " + theNextGeneration.get(1).chromosome.toString());
         }
-
-        System.out.println("Next generation will have " + theNextGeneration.size() + " members");
-
-        // TODO: Mutations
+        //System.out.println("Next generation will have " + theNextGeneration.size() + " members");
         return theNextGeneration;
     }
 
@@ -250,37 +201,24 @@ public class Cryptek {
         return eliteChildren;
    }
 
-
-
     private ArrayList<Decrypter> pickBreeders(ArrayList<SurvivalDistribution> participants){
         try {
         ArrayList<Decrypter> partners = new ArrayList<>();
         Collections.sort(participants);
 
         ArrayList<SurvivalDistribution> copyOfParticipants = Cloner.deepCopySurvivalDistribution(participants);
-        /*
-        System.out.println("Participants in breeding: " );
-
-        for(int i = 0; i < copyOfParticipants.size(); ++i){
-            System.out.println(copyOfParticipants.get(i).decrypter.chromosome.toString());
-        }
-        */
-
 
         partners.add(getRandomDecrypter(copyOfParticipants).decrypter);
-        //System.out.println("First lucky parent: " + partners.get(0).chromosome.toString());
         int iterations = 0;
 
         while(partners.size() < 2) {
             if(iterations > 100){
-                System.out.println("Couldn't find a partner :(");
-                System.out.println("But since i am nice, i am generating one!");
+                //System.out.println("Couldn't find a partner :(");
+                //System.out.println("But since i am nice, i am generating one!");
                 partners.add(new Decrypter(partners.get(0).chromosome.size()));
             }
 
             SurvivalDistribution spouse = getRandomDecrypter(copyOfParticipants);
-            //System.out.println("Possible spouse? : " + spouse.decrypter.chromosome.toString());
-            //System.out.println("checking equals: " + partners.get(0).chromosome.toString() + " with possible partner: " +  spouse.decrypter.chromosome.toString());
 
             if (spouse.decrypter.chromosome.size() == partners.get(0).chromosome.size()) {
                 if (!(partners.get(0).equals(spouse.decrypter))) {
@@ -302,14 +240,6 @@ public class Cryptek {
             System.out.println("Could not copy participants :(");
         }
         return null;
-    }
-
-    private ArrayList<Decrypter> extractDecrypters(ArrayList<SurvivalDistribution> survivalDistributions){
-        ArrayList<Decrypter> onlyDecrypters = new ArrayList<>();
-        for(int i = 0; i < survivalDistributions.size(); ++i){
-            onlyDecrypters.add(survivalDistributions.get(i).decrypter);
-        }
-        return onlyDecrypters;
     }
 
     private SurvivalDistribution getRandomDecrypter(ArrayList<SurvivalDistribution> participants){
@@ -370,11 +300,8 @@ public class Cryptek {
         }
           double scale = freq/100d;
 
-        //System.out.println("Scaling with " + scale);
-
         for(int i = 0; i < population.size(); ++i){
             rates.add(new SurvivalDistribution(population.get(i), Math.round(population.get(i).fitness/scale)));
-            //System.out.println("Survival rate: " + rates.get(i).survivalRate);
         }
         return rates;
     }
